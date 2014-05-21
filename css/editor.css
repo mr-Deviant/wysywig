@@ -1,0 +1,27 @@
+html, body {
+	height: 100%;
+}
+.editable {
+	outline: 1px dashed transparent; /* IE 8+ */
+	   -moz-transition: outline 0.5s;
+    -webkit-transition: outline 0.5s;
+         -o-transition: outline 0.5s;
+            transition: outline 0.5s;
+}
+.editable:hover { /* IE 7+ */
+	/*background: rgba(125, 125, 125, 0.5);*/
+	outline: 1px dashed silver; /* IE 8+ */
+}
+.editable-focus {
+	outline: 1px dashed red !important; /* IE 8+ */
+}
+.editor-dialog-inner {
+	   -moz-user-select: none;
+	-webkit-user-select: none;
+	    -ms-user-select: none;
+}
+.editor-draggable {
+	cursor: move;
+	opacity: 0.75;
+	filter: alpha(opacity=75);
+}
