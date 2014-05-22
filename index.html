@@ -22,9 +22,19 @@ Block text block text block text block text
 <script>
 //<!--
 
+/*
+// Abstract function for saving new content
+	Editor.prototype.saveContent = function(element, content) {
+		console.log('saveContent function is abstract and should be redefined');
+		console.log('Element class:' + element.className + ', new content:'+ content);
+	};
+
+*/
+
 // Initialize wysywig editor
 $(document).ready(function() {
-	$('.editable').makeEditable();
+	$('.editable')
+	.makeEditable();
 });
 
 //-->
@@ -104,9 +114,9 @@ $(document).ready(function() {
 
 				<br />
 
-				<input type="button" name="save" value="Save">
-				<input type="button" name="restore" value="Restore">
-				<input type="button" name="cancel" value="Cancel" class="editor-cancel">
+				<input type="button" name="save" value="Save" class="editor-save">
+				<input type="button" name="restore" value="Restore" class="editor-restore">
+				<input type="button" name="hide" value="Hide" class="editor-hide">
 			</div>
 		</div>
 	</div>

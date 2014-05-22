@@ -1,25 +1,19 @@
 /***** Made in Ukraine *****/
 
-; // In case previous script wasn't
+; // In case previous script wasn't closed properly
 // Check if jQuery is avialable
 if (typeof(jQuery) === 'undefined') {
 	console.log('Editor plugin require jQuery!');
 }
 
-(function($, window, document, undefined) {
-	// Apply wysywig editor to each editable zone
-	$.fn.makeEditable = function(options) {
-		return $(this).each(function(index, element) {
-			new Editor(element, options);
-		});
-	};
-
+(function($, window, document) {
 	// Wysywig editor main function
 	var Editor = function(element, options) {
 		'use strict';
 
+		var that = this,
 			// Remember editor element & controls
-		var $editableArea = $(element), // Current editable content area 
+			$editableArea = $(element), // Current editable content area 
 			$editorControls,
 			// Default settings
 			settings = {
@@ -36,21 +30,15 @@ if (typeof(jQuery) === 'undefined') {
 		var __construct = function() {
 			// Show editor when user firstly click on editable area
 			// TODO: use .one('click')
-	    	$editableArea.click(function(event) {
-	    		showEditorOnInnerClick(event);
-	    	});
-
-	    	// TODO: Doesn't work now, because $editorControls is out of jQuery click scope
-	    	// Hide editor when user click on Cancel button
-	    	$('body').on('click', '.editor-cancel', function() {
-	    		hideEditor();
-	    	});
+	    	$editableArea.click(showEditorOnInnerClick);
 
 	    	// Close editor if user click outside of editor
-	    	$('body').click(function(event) {
-	    		hideEditorOnOuterClick(event);
-	    	});
-		}();
+	    	$('body').click(hideEditorOnOuterClick);
+
+	    	// Save original content of editable area
+	    	storeOriginalContent();
+	    	
+		};
 
 		var showEditorOnInnerClick = function(event) {
 			// If we already display controls panel, skip initialization
@@ -66,8 +54,8 @@ if (typeof(jQuery) === 'undefined') {
 				// If we doesn't already display controls panel
 				!$editorControls
 				||
-				// Or we click on our editable area
-				event.target === $editableArea[0]
+				// Or we click on our editable area or some element inside
+				(event.target === $editableArea[0] || $(event.target).closest($editableArea)[0] === $editableArea[0])
 				||
 				// Or we click on our controls panel
 				($editorControls && $(event.target).closest(settings.editorDialogSelector)[0] === $editorControls[0])
@@ -115,6 +103,21 @@ if (typeof(jQuery) === 'undefined') {
 			// Show editor controls
 			$controlsInner.css({'marginTop': $controlsInner.outerHeight() + 'px'})
 				.animate({'marginTop': 0}, 500);
+
+			// Save new content when user click on Save button
+	    	$('.editor-save', $editorControls).on('click', function() {
+	    		that.saveContent($editableArea[0], getNewContent());
+	    	});
+
+			// Restore original content when user click on Restore button
+	    	$('.editor-restore', $editorControls).on('click', function() {
+	    		restoreOriginalContent();
+	    	});
+
+			// Hide editor when user click on Hide button
+	    	$('.editor-hide', $editorControls).on('click', function() {
+	    		hideEditor();
+	    	});
 		};
 
 		var placeEditor = function() {
@@ -140,6 +143,18 @@ if (typeof(jQuery) === 'undefined') {
 
 			// Disable edit of content
 			$editableArea.attr('contenteditable', false);
+		};
+
+		var storeOriginalContent = function() {
+			$editableArea.data('originalContent', $editableArea.html());
+		};
+
+		var getNewContent = function() {
+			return $editableArea.html();
+		};
+
+		var restoreOriginalContent = function() {
+			$editableArea.html($editableArea.data('originalContent'));
 		};
 
 		var makeControlsDraggable = function() {
@@ -182,6 +197,21 @@ if (typeof(jQuery) === 'undefined') {
 			$('body').unbind('mousemove', dragProcess);
 		};
 
+		// Call constructor
+		__construct();
+	};
+
+	// Abstract function for saving new content
+	Editor.prototype.saveContent = function(element, content) {
+		console.log('saveContent function is abstract and should be redefined!!!');
+		console.log('Element class:' + element.className + ', new content:'+ content);
+	};
+
+	// Apply wysywig editor to each editable zone
+	$.fn.makeEditable = function(options) {
+		return $(this).each(function(index, element) {
+			new Editor(element, options);
+		});
 	};
 
 })(jQuery, window, document);
