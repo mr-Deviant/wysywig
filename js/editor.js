@@ -1,6 +1,7 @@
+;'use strict';
+
 /***** Made in Ukraine *****/
 
-; // In case previous script wasn't closed properly
 // Check if jQuery is avialable
 if (typeof(jQuery) === 'undefined') {
 	console.log('Editor plugin require jQuery!');
@@ -9,8 +10,7 @@ if (typeof(jQuery) === 'undefined') {
 (function($, window, document) {
 	// Wysywig editor main function
 	var Editor = function(element, options) {
-		'use strict';
-
+		
 		var that = this,
 			// Remember editor element & controls
 			$editableArea = $(element), // Current editable content area 
@@ -37,7 +37,6 @@ if (typeof(jQuery) === 'undefined') {
 
 	    	// Save original content of editable area
 	    	storeOriginalContent();
-	    	
 		};
 
 		var showEditorOnInnerClick = function(event) {
@@ -94,7 +93,7 @@ if (typeof(jQuery) === 'undefined') {
 
 			$editorControls.css({
 				'height': $controlsInner.outerHeight() + 'px',
-				'width': $controlsInner.outerWidth() + 'px'
+				'width' : $controlsInner.outerWidth() + 'px'
 			});
 
 			// Place editor controls above or below editing content
@@ -120,13 +119,35 @@ if (typeof(jQuery) === 'undefined') {
 	    	});
 		};
 
+		var showFrom = 'top';
+
 		var placeEditor = function() {
-			var $controlsInner = $editorControls.find(':first');
-			var offset = $editableArea.offset();
+			var $document = $('document'), // Window
+				documentWidth = $document.width(),
+				documentHeight = $document.height(),
+				editableAreaWidth = $editableArea.width(),// Editable area
+				editableAreaHeight = $editableArea.height(),
+				$controlsInner = $editorControls.find(':first'), // Controls
+				controlsInnerWidth = $controlsInner.outerWidth(),
+				controlsInnerHeight = $controlsInner.outerHeight(),
+				offset = $editableArea.offset();
+
+			// Show editor on top of content if it possible
+			if (offset.top >= controlsInnerHeight) {
+				showFrom = 'top';
+			} else if (documentHeight - offset.top - editableAreaHeight >= controlsInnerHeight) {
+				showFrom = 'bottom';
+			} else if (documentWidth - offset.left - editableAreaWidth >= controlsInnerWidth) {
+				showFrom = 'right';
+			} else if (offset.left >= controlsInnerWidth) {
+				showFrom = 'left';
+			}
+
 			$editorControls.css({
 				top: offset.top - $controlsInner.outerHeight() + 'px',
 				left: offset.left + 'px'
 			});
+			
 		};
 
 		var hideEditor = function() {
