@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<style>
+html, body {
+	height: 100%;
+}
+.editable {
+	outline: 1px dashed transparent; /* IE 8+ */
+	   -moz-transition: outline 0.5s;
+    -webkit-transition: outline 0.5s;
+         -o-transition: outline 0.5s;
+            transition: outline 0.5s;
+}
+.editable:hover { /* IE 7+ */
+	/*background: rgba(125, 125, 125, 0.5);*/
+	outline: 1px dashed silver; /* IE 8+ */
+}
+.editable-focus {
+	outline: 1px dashed red !important; /* IE 8+ */
+}
+.wysywig-dialog-inner { /* Disable posibility so slect text in dialog */
+	   -moz-user-select: none;
+	-webkit-user-select: none;
+	    -ms-user-select: none;
+}
+.wysywig-draggable {
+	cursor: move;
+	opacity: 0.75;
+	filter: alpha(opacity=75);
+}
+</style>
+
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script>
+//<!--
+
+/***** Made in Ukraine *****/
+
+;
+// Check if jQuery is avialable
+if (typeof(jQuery) === 'undefined') {
+	console.log('Editor plugin require jQuery!');
+}
+
+(function($, window, document, undefined) {
+
+	$.fn.editable = function(options) {
+		return $(this).each(function(index, element) {
+			new Editor(element, options);
+		});
+	};
+
+	var Editor = function(element, options) {
+		'use strict';
+
+			// Remember editor element & controls
+		var $editableArea = $(element),
+			$editorControls,
+			// Default settings
+			settings = {
+				controlsId: '#editor-controls',
+				isDraggable: true
+			};
+
+		settings = $.extend(settings, options);
+
+		var __construct = function() {
+			// Show editor when user firstly click on editable area
+	    	$(element).click(function(event) {
+				// If we already display controls panel, skip initialization
+				if ($editorControls) {
+					return false;
+				}
+
+				showEditor();
+			});
+
+	    	// Close editor if user click outside of editor
+	    	$('body').click(function(event) {
+				if (
+					// If we doesn't already display controls panel
+					!$editorControls
+					||
+					// Or we click on our editable area
+					event.target === $editableArea[0]
+					||
+					// Or we click on our controls panel
+					($editorControls && $(event.target).closest('.wysywig-dialog')[0] === $editorControls[0])
+				) {
+					// Skip this section
+					return false;
+				}
+
+				hideEditor();
+			});
+	    }();
+
+		var showEditor = function() {
+			// Enable edit of content
+			$(this).attr('contenteditable', true);
+
+			// Highlight editing content area
+			$(this).addClass('editable-focus');
+
+			// Get controls panel code
+			var controlsHtml = $(settings.controlsId).html().trim();
+
+			// Add hidden editor controls to DOM
+			$editorControls = $(controlsHtml).appendTo('body');
+
+			// Set correct size for controls
+			var $controlsInner = $editorControls.find(':first');
+
+			$editorControls.css({
+				'height': $controlsInner.outerHeight() + 'px',
+				'width': $controlsInner.outerWidth() + 'px'
+			});
+
+			// Place editor controls above or below editing content
+			placeEditor();
+
+			// Show editor controls
+			$controlsInner.css({'marginTop': $controlsInner.outerHeight() + 'px'})
+			.animate({'marginTop': 0}, 500);
+
+			// Make controls draggable
+			if (settings.isDraggable) {
+				makeControlsDraggable();
+			}
+		};
+
+		var placeEditor = function() {
+			var $controlsInner = $editorControls.find(':first');
+			var offset = $editableArea.offset();
+			$editorControls.css({
+				top: offset.top - $controlsInner.outerHeight() + 'px',
+				left: offset.left + 'px'
+			});
+		};
+
+		var hideEditor = function() {
+			var $controlsInner = $editorControls.find(':first');
+
+			$.when($controlsInner.animate({'marginTop': $controlsInner.outerHeight() + 'px'}, 500))
+			.then(function() {
+				$editorControls.remove();
+				$editorControls = null;
+			});
+
+			// Unhighlight editing content area
+			$editableArea.removeClass('editable-focus');
+
+			// Disable edit of content
+			$editableArea.attr('contenteditable', false);
+		};
+
+		var makeControlsDraggable = function() {
+			
+			var dragHandler = function(event) {
+				var posX = event.pageX,
+                    posY = event.pageY,
+                    finishX = posX - event.data.startX,
+                    finishY = posY - event.data.startY;
+
+				event.data.$element.css({left: finishX + 'px', top: finishY + 'px'});
+			};
+
+			$editorControls.mousedown(function(event) {
+				var posX = event.pageX,
+                    posY = event.pageY,
+                    position = $(this).position(),
+                    blockTop = position.top,
+                    blockLeft = position.left,
+                    startX = posX - blockLeft,
+                    startY = posY - blockTop;
+
+                $(this).addClass('wysywig-draggable');
+
+				$('body').bind('mousemove', {$element: $(this), startX: startX, startY: startY}, dragHandler);
+			});
+
+			$editorControls.mouseup(function() {
+				$(this).removeClass('wysywig-draggable');
+				
+				$('body').unbind('mousemove', dragHandler);
+			});
+		};
+
+	};
+
+})(jQuery, window, document);
+//-->
+</script>
+
+</head>
+<body>
+
+<br><br><br>
+<div class="editable">
+Block text block text block text block text<br>
+Block text block text block text block text<br>
+Block text block text block text block text<br>
+Block text block text block text block text
+</div>
+
+<span class="editable">Inline text</span>
+
+<script>
+//<!--
+
+// Initialize wysywig editor
+$(document).ready(function() {
+	$('.editable').editable();
+});
+
+//-->
+</script>
+
+<script type="text/template" id="editor-controls">
+	<div class="wysywig-dialog" style="position: absolute; z-index: 999; overflow: hidden; white-space: nowrap;">
+		<div class="wysywig-dialog-inner" style="background-color: #fff; border: 1px solid #000; display: inline-block; margin-top: 999px; padding: 5px;">
+			<select onchange="document.execCommand('fontname', false, this.value);">
+				<option style="font-family: Arial;">Arial</option>
+				<option style="font-family: Arial Black;">Arial Black</option>
+				<option style="font-family: Arial Narrow;">Arial Narrow</option>
+				<option style="font-family: Courier New;">Courier New</option>
+				<option style="font-family: Georgia;">Georgia</option>
+				<option style="font-family: Impact;">Impact</option>
+				<option style="font-family: Lucida console;">Lucida console</option>
+				<option style="font-family: Tahoma;">Tahoma</option>
+				<option style="font-family: Times New Roman;">Times New Roman</option>
+				<option style="font-family: Trebuchet MS;">Trebuchet MS</option>
+				<option style="font-family: Verdana;">Verdana</option>
+			</select>
+			<select onchange="document.execCommand('fontsize', false, this.value);">
+				<option value="1">10</option>
+				<option value="2">13</option>
+				<option value="3">16</option>
+				<option value="4">18</option>
+				<option value="5">24</option>
+				<option value="6">32</option>
+				<option value="7">48</option>
+			</select>
+			
+			<img src="images/icons/text_bold.png" onclick="document.execCommand('bold', false, null);" title="Bold" alt="Bold" /><!-- Полужирный -->
+			<img src="images/icons/text_italic.png" onclick="document.execCommand('italic', false, null);" title="Italic" alt="Italic" /><!-- Курсив -->
+			<img src="images/icons/text_underline.png" onclick="document.execCommand('underline', false, null);" title="Underline" alt="Underline" /><!-- Подчеркнутый -->
+			
+			<img src="images/icons/text_subscript.png" onclick="document.execCommand('subscript', false, null);" title="Subscript" alt="Subscript" /><!-- Подстрочный знак -->
+			<img src="images/icons/text_superscript.png" onclick="document.execCommand('superscript', false, null);" title="Superscript" alt="Superscript" /><!-- Надстрочный знак -->
+			
+			<img src="images/icons/_back_color.png" onclick="document.execCommand('backcolor', false, prompt('Input color'))" title="Backcolor" alt="Backcolor" /><!-- Введите цвет   Цвет фона -->
+			<img src="images/icons/_font_color.png" onclick="document.execCommand('forecolor', false, prompt('Input color'))" title="Fontcolor" alt="Fontcolor" /><!-- Введите цвет   Цвет текста -->
+			<img src="images/icons/_hilight_color.png" onclick="document.execCommand('hilitecolor', false, prompt('Input color'))" title="Hilightcolor" alt="Hilightcolor" /><!-- Введите цвет   Цвет выделения текста -->
+			
+			<img src="images/icons/arrow_undo.png" onclick="document.execCommand('undo', false, null);" title="Undo" alt="Undo" /><!-- Отменить действие -->
+			<img src="images/icons/arrow_redo.png" onclick="document.execCommand('redo', false, null);" title="Redo" alt="Redo" /><!-- Восстановить действие -->
+			
+			<br />
+			
+			<img src="images/icons/text_align_left.png" onclick="document.execCommand('justifyleft', false, null);" title="Align left" alt="Align left" /><!-- Выровнять по левому краю -->
+			<img src="images/icons/text_align_right.png" onclick="document.execCommand('justifyright', false, null);" title="Align right" alt="Align right" /><!-- Выровнять по центру -->
+			<img src="images/icons/text_align_center.png" onclick="document.execCommand('justifycenter', false, null);" title="Align center" alt="Align center" /><!-- Выровнять по правому краю -->
+			<img src="images/icons/text_align_justify.png" onclick="document.execCommand('justifyfull', false, null);" title="Align justify" alt="Align justify" /><!-- Выровнять по ширине -->
+			
+			<select onChange="document.execCommand('heading', false, this.value);">
+				<option value="p">Normal</option><!-- Обыкновенный -->
+				<option value="h1">Heading 1</option><!-- Заголовок -->
+				<option value="h2">Heading 2</option><!-- Заголовок -->
+				<option value="h3">Heading 3</option><!-- Заголовок -->
+				<option value="h4">Heading 4</option><!-- Заголовок -->
+				<option value="h5">Heading 5</option><!-- Заголовок -->
+				<option value="h6">Heading 6</option><!-- Заголовок -->
+				<option value="pre">Preformatted</option><!-- Отформатированный -->
+				<option value="address">Address</option><!-- Адрес -->
+			</select>
+
+			<img src="images/icons/text_indent.png" onclick="document.execCommand('indent', false, null)" title="Indent" alt="Indent" />
+			<img src="images/icons/text_indent_remove.png" onclick="document.execCommand('outdent', false, null)" title="Outdent" alt="Outdent" />
+			<img src="images/icons/text_list_bullets.png" onclick="document.execCommand('insertunorderedlist', false, null);" title="Unordered list" alt="Unordered list" />
+			<img src="images/icons/text_list_numbers.png" onclick="document.execCommand('insertorderedlist', false, null);" title="Ordered list" alt="Ordered list" />
+			
+			<img src="images/icons/link.png" onclick="document.execCommand('createLink', false, prompt('Input URL'));" title="Link" alt="Link" /><!-- Введите URL -->
+			<img src="images/icons/link_break.png" onclick="document.execCommand('unlink', false, null);" title="Unlink" alt="Unlink" />
+			<img src="images/icons/image.png" onclick="document.execCommand('insertimage', false, prompt('Input URL'));" title="Image" alt="Image" /><!-- Введите URL -->
+			
+			<img src="images/icons/cancel.png" onclick="document.execCommand('delete', false, null);" title="Delete" alt="Delete" />
+
+			<br />
+
+			<input type="button" name="save" value="Save">
+			<input type="button" name="restore" value="Restore">
+			<input type="button" name="cancel" value="Cancel">
+		</div>
+	</div>
+</script>
+
+<body>
+</html>
